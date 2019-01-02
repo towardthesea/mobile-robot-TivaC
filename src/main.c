@@ -76,6 +76,9 @@ int main(void){
 			dAvail = 0;
 
 			setPoint1 = setPoint2 = atoi(RXbuffer);
+			UART0SendStringWithoutEndLine("receive ");
+			itoa(setPoint1, TXbuffer);
+			UART0SendString(TXbuffer);
 		}
 //		Moving(MOTOR3, FORWARD, Output1);
 //		Moving(MOTOR4, FORWARD, Output2);
@@ -88,19 +91,19 @@ int main(void){
 void SysTickHandler(void){
 	systickCnt++;
 
-	if(systickCnt % 5 == 0){
+	if(systickCnt % 10 == 0){
 		Output1 = PIDController(setPoint1, rps1, Output1, Error_Last1);
 		Output2 = PIDController(setPoint2, rps2, Output2, Error_Last2);
 
-		itoa(rps1, TXbuffer);
-		UART0SendString(TXbuffer);
-		itoa(rps2, TXbuffer);
-		UART0SendString(TXbuffer);
+//		itoa(rps1, TXbuffer);
+//		UART0SendString(TXbuffer);
+//		itoa(rps2, TXbuffer);
+//		UART0SendString(TXbuffer);
 	}
 
 	if(systickCnt == 1000){
 		systickCnt = 0;
-		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_3)^8);
-		readTemp();
+		GPIOPinWrite(GPIO_PORTF_BASE, LED_GREEN, GPIOPinRead(GPIO_PORTF_BASE, LED_GREEN)^8);
+//		readTemp();
 	}
 }
