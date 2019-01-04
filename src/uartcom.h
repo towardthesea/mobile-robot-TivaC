@@ -81,7 +81,8 @@ void UART0IntHandler(void){
 		memmove(RXbuffer, RXbuffer+1, strlen(RXbuffer+1)+1);
 		RXcmd = 1;
 	}
-//	else
+	else
+		RXcmd = 0;
 	bufIndex = 0;
 	dAvail = 1;
 }
