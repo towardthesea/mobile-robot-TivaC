@@ -29,7 +29,8 @@
 
 unsigned long systickCnt = 0;
 
-int setPoint1, setPoint2;
+int setPWMduty1, setPWMduty2;
+int setRPS1, setRPS2;
 int iread = 0;
 
 void SysTickHandler(void);
@@ -59,8 +60,8 @@ int main(void){
 	Motor4Init();
 
 	EncoderInit();
-	PIDInit(1.5, 2, 10);
-	setPoint1 = setPoint2 = 1000;
+	PIDInit(.4, .2, .1);
+	setPWMduty1 = setPWMduty2 = 1000;
 
 	UltrasonicInit();
 //
@@ -74,31 +75,67 @@ int main(void){
 	while(1){
 		if(dAvail){
 			dAvail = 0;
-
-			setPoint1 = setPoint2 = atoi(RXbuffer);
 			UART0SendStringWithoutEndLine("receive ");
-			itoa(setPoint1, TXbuffer);
+			if (RXcmd == 0)
+			{
+				setPWMduty1 = setPWMduty2 = atoi(RXbuffer);
+				itoa(setPWMduty1, TXbuffer);
+			}
+			else if (RXcmd == 1)
+			{
+				setRPS1 = setRPS2 = atoi(RXbuffer);
+				itoa(setRPS1, TXbuffer);
+			}
 			UART0SendString(TXbuffer);
 		}
 //		Moving(MOTOR3, FORWARD, Output1);
 //		Moving(MOTOR4, FORWARD, Output2);
 
-		Moving(MOTOR3, BACKWARD, Output1);
-		Moving(MOTOR4, BACKWARD, Output1);
+//		Moving(MOTOR3, BACKWARD, Output1);
+//		Moving(MOTOR4, BACKWARD, Output2);
+		Moving(MOTOR3, BACKWARD, setPWMduty1);
+		Moving(MOTOR4, BACKWARD, setPWMduty2);
 	}
 }
 
 void SysTickHandler(void){
 	systickCnt++;
 
-	if(systickCnt % 10 == 0){
-		Output1 = PIDController(setPoint1, rps1, Output1, Error_Last1);
-		Output2 = PIDController(setPoint2, rps2, Output2, Error_Last2);
+	if(systickCnt % 20 == 0)
+	{
+		Output1 = PIDController(setRPS1, rps1, Output1, Error_Last1);
+		Output2 = PIDController(setRPS2, rps2, Output2, Error_Last2);
 
-//		itoa(rps1, TXbuffer);
-//		UART0SendString(TXbuffer);
-//		itoa(rps2, TXbuffer);
-//		UART0SendString(TXbuffer);
+		// TODO: convert Output to setPWMduty
+		if (RXcmd==1)
+		{
+			setPWMduty1 = Output1;
+			setPWMduty2 = Output2;
+		}
+
+		if (RXcmd==0)
+			UART0SendStringWithoutEndLine("setPMW ");
+		else if(RXcmd==1)
+			UART0SendStringWithoutEndLine("setRPS ");
+		UART0SendStringWithoutEndLine(RXbuffer);
+		UART0SendStringWithoutEndLine(" m-rps ");
+		itoa(rps1, TXbuffer);
+		UART0SendStringWithoutEndLine(TXbuffer);
+		UART0SendStringWithoutEndLine(" ");
+		itoa(rps2, TXbuffer);
+
+		if (RXcmd == 0)
+			UART0SendString(TXbuffer);
+		else if (RXcmd == 1)
+		{
+			UART0SendStringWithoutEndLine(TXbuffer);
+			UART0SendStringWithoutEndLine(" Output ");
+			itoa(Output1, TXbuffer);
+			UART0SendStringWithoutEndLine(TXbuffer);
+			UART0SendStringWithoutEndLine(" ");
+			itoa(Output2, TXbuffer);
+			UART0SendString(TXbuffer);
+		}
 	}
 
 	if(systickCnt == 1000){

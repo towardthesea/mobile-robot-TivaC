@@ -22,7 +22,7 @@
 char txt[20] = "UART0 Start OK!";
 int i;
 char RXbuffer[80], TXbuffer[80];
-int bufIndex = 0;
+int bufIndex = 0, RXcmd = 0;
 //tBoolean dAvail = 0;
 _Bool dAvail = 0;
 
@@ -75,6 +75,13 @@ void UART0IntHandler(void){
 	}
 		
 	RXbuffer[bufIndex] = '\0';
+	if(RXbuffer[0] == 'r')	// set rps
+	{
+//		bufIndex = 1;
+		memmove(RXbuffer, RXbuffer+1, strlen(RXbuffer+1)+1);
+		RXcmd = 1;
+	}
+//	else
 	bufIndex = 0;
 	dAvail = 1;
 }

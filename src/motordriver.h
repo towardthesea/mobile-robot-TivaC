@@ -216,10 +216,17 @@ void TimerHandler(void){
 	TimerIntClear(TIMER4_BASE, TIMER_TIMA_TIMEOUT);
 	
 	if(ulStatus){
-		if(!step) { val1 = val2 = 0; }
-		
-		else{ rps1 = val1 * 200 / 334; rps2 = val2 * 200 / 334; }
-		
+		if(!step)
+		{
+			val1 = val2 = 0;
+		}
+		else
+		{
+//			rps1 = val1 * 200 / 334;
+//			rps2 = val2 * 200 / 334;
+			rps1 = val1 * 1 / 10;
+			rps2 = val2 * 1 / 10;
+		}
 		step = step ^ 1;
 	}
 }
@@ -231,11 +238,19 @@ void EncoderInterrupt(void){
 	ulStatus = GPIOIntStatus(GPIO_PORTA_BASE, true);
 	GPIOIntClear(GPIO_PORTA_BASE, GPIO_PIN_5|GPIO_PIN_7);
 	
-	if(ulStatus == 128){
+	if(ulStatus == 128)	// PIN_7
+	{
 		val1++;
 	}
 	
-	if(ulStatus == 32){
+	if(ulStatus == 32)	// PIN_5
+	{
+		val2++;
+	}
+
+	if(ulStatus == 160)	// both PIN_5 & PIN_7
+	{
+		val1++;
 		val2++;
 	}
 }
@@ -244,7 +259,8 @@ void EncoderInit(void){
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER4);
 //	TimerConfigure(TIMER4_BASE, TIMER_CFG_32_BIT_PER);
 	TimerConfigure(TIMER4_BASE, TIMER_CFG_PERIODIC);
-	TimerLoadSet(TIMER4_BASE, TIMER_A, SysCtlClockGet()/200);
+//	TimerLoadSet(TIMER4_BASE, TIMER_A, SysCtlClockGet()/200);
+	TimerLoadSet(TIMER4_BASE, TIMER_A, SysCtlClockGet()/1);
 	TimerIntEnable(TIMER4_BASE, TIMER_TIMA_TIMEOUT);
 	TimerIntRegister(TIMER4_BASE, TIMER_A, TimerHandler);
 	TimerEnable(TIMER4_BASE, TIMER_A);
@@ -284,7 +300,7 @@ int PIDController(float Set_Point, int rps, int Output, float Error){
 		
 	Output += (float)(Kp*Error_Now) + (float)(Ki*Error_Sum) + (float)(Kd*Error_Del);
 		
-	if(Output > 4000) Output = 4000;
+	if(Output > 4095) Output = 4095;
 	if(Output < 0) Output = 0;
 	
 	return Output;
