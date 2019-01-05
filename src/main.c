@@ -60,7 +60,7 @@ int main(void){
 	Motor4Init();
 
 	EncoderInit();
-	PIDInit(.4, .2, .1);
+	PIDInit(.4, .1, .2);
 	setPWMduty1 = setPWMduty2 = 1000;
 
 	UltrasonicInit();
@@ -88,13 +88,8 @@ int main(void){
 			}
 			UART0SendString(TXbuffer);
 		}
-//		Moving(MOTOR3, FORWARD, Output1);
-//		Moving(MOTOR4, FORWARD, Output2);
-
-//		Moving(MOTOR3, BACKWARD, Output1);
-//		Moving(MOTOR4, BACKWARD, Output2);
-		Moving(MOTOR3, BACKWARD, setPWMduty1);
-		Moving(MOTOR4, BACKWARD, setPWMduty2);
+		Moving(MOTOR3, iDirection, setPWMduty1);
+		Moving(MOTOR4, iDirection, setPWMduty2);
 	}
 }
 

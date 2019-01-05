@@ -14,6 +14,7 @@
 #include "driverlib/gpio.h"
 #include "driverlib/pin_map.h"
 #include "driverlib/interrupt.h"
+#include "motordriver.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -23,6 +24,7 @@ char txt[20] = "UART0 Start OK!";
 int i;
 char RXbuffer[80], TXbuffer[80];
 int bufIndex = 0, RXcmd = 0;
+int iDirection = 0;
 //tBoolean dAvail = 0;
 _Bool dAvail = 0;
 
@@ -64,6 +66,14 @@ extern void itoa( unsigned long n, char s[] )
   reverse( s ) ;
 }
 
+/**
+ * UART CMD Handler
+ * f<pwm>: run forward with pwm duty
+ * b<pwm>: run backward with pwm duty
+ * fr<rps>: run forward with round/second mode
+ * br<rps>: run backward with round/second mode
+ */
+
 void UART0IntHandler(void){	
 	UARTIntClear(UART0_BASE, UART_INT_RX|UART_INT_RT);
 	
@@ -75,14 +85,20 @@ void UART0IntHandler(void){
 	}
 		
 	RXbuffer[bufIndex] = '\0';
-	if(RXbuffer[0] == 'r')	// set rps
+	if(RXbuffer[0] == 'f')	// set direction
+		iDirection = FORWARD;
+	else if(RXbuffer[0] == 'b')	// set direction
+		iDirection = BACKWARD;
+	if(RXbuffer[1] == 'r')	// set rps
 	{
-//		bufIndex = 1;
-		memmove(RXbuffer, RXbuffer+1, strlen(RXbuffer+1)+1);
+		memmove(RXbuffer, RXbuffer+2, strlen(RXbuffer+2)+2);
 		RXcmd = 1;
 	}
 	else
+	{
+		memmove(RXbuffer, RXbuffer+1, strlen(RXbuffer+1)+1);
 		RXcmd = 0;
+	}
 	bufIndex = 0;
 	dAvail = 1;
 }
