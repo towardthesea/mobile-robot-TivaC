@@ -209,8 +209,14 @@ unsigned long VoltPercent(int iPercent){
 _Bool step = 0;
 unsigned long val1 = 0, val2 = 0;
 unsigned long rps1, rps2;
+const int freqEncoderCounter = 1;
+const int pprEncoder = 10;	// Number of pulse per round of encoder
+const float radius = 0.065;
+const float L_base = 0.085;
+float vel = 0, omega = 0;	// Linear and Rotational velocity of robot
 
-void TimerHandler(void){
+void TimerHandler(void)
+{
 	unsigned long ulStatus;
 	ulStatus = TimerIntStatus(TIMER4_BASE, true);
 	TimerIntClear(TIMER4_BASE, TIMER_TIMA_TIMEOUT);
@@ -224,14 +230,35 @@ void TimerHandler(void){
 		{
 //			rps1 = val1 * 200 / 334;
 //			rps2 = val2 * 200 / 334;
-			rps1 = val1 * 1 / 10;
-			rps2 = val2 * 1 / 10;
+			rps1 = val1 * freqEncoderCounter / pprEncoder;
+			rps2 = val2 * freqEncoderCounter / pprEncoder;
 		}
 		step = step ^ 1;
 	}
 }
 
-void EncoderInterrupt(void){			
+void velocityCompute(void)
+{
+	vel = (rps1*radius + rps2*radius)/2.0;
+	omega = (-rps1*radius + rps2*radius)/(2.0*L_base);
+}
+
+int spinCompute(float vel_set, float omega_set, int wheel)
+{
+	int rps1_set = 0, rps2_set = 0;
+	rps1_set = (int)(vel_set - omega_set*L_base)/radius;
+	rps2_set = (int)(vel_set + omega_set*L_base)/radius;
+
+	if (wheel == 1)
+		return rps1_set;
+	else if (wheel == 2)
+		return rps2_set;
+	else
+		return 0;
+}
+
+void EncoderInterrupt(void)
+{
 	unsigned long ulStatus;
 //	ulStatus = GPIOPinIntStatus(GPIO_PORTA_BASE, true);
 //	GPIOPinIntClear(GPIO_PORTA_BASE, GPIO_PIN_5|GPIO_PIN_7);
@@ -260,7 +287,7 @@ void EncoderInit(void){
 //	TimerConfigure(TIMER4_BASE, TIMER_CFG_32_BIT_PER);
 	TimerConfigure(TIMER4_BASE, TIMER_CFG_PERIODIC);
 //	TimerLoadSet(TIMER4_BASE, TIMER_A, SysCtlClockGet()/200);
-	TimerLoadSet(TIMER4_BASE, TIMER_A, SysCtlClockGet()/1);
+	TimerLoadSet(TIMER4_BASE, TIMER_A, SysCtlClockGet()/freqEncoderCounter);
 	TimerIntEnable(TIMER4_BASE, TIMER_TIMA_TIMEOUT);
 	TimerIntRegister(TIMER4_BASE, TIMER_A, TimerHandler);
 	TimerEnable(TIMER4_BASE, TIMER_A);
@@ -268,10 +295,11 @@ void EncoderInit(void){
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
 	GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_5|GPIO_PIN_7);
 	GPIOPadConfigSet(GPIO_PORTA_BASE, GPIO_PIN_5|GPIO_PIN_7, GPIO_STRENGTH_8MA, GPIO_PIN_TYPE_STD_WPU);
-	
+
 //	GPIOPinIntEnable(GPIO_PORTA_BASE, GPIO_PIN_5|GPIO_PIN_7);
 	GPIOIntEnable(GPIO_PORTA_BASE, GPIO_PIN_5|GPIO_PIN_7);
 	GPIOIntTypeSet(GPIO_PORTA_BASE, GPIO_PIN_5|GPIO_PIN_7, GPIO_FALLING_EDGE);
+
 //	GPIOPortIntRegister(GPIO_PORTA_BASE, EncoderInterrupt);
 	GPIOIntRegister(GPIO_PORTA_BASE, EncoderInterrupt);
 }
