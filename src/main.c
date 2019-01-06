@@ -53,6 +53,8 @@ int main(void){
 	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, 0);
 	ROM_SysCtlDelay(5000000);
 
+	ButtonsInit();
+
 	UART0Init();
 	StellarisInit();
 
