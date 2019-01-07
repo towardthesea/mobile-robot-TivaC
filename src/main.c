@@ -32,6 +32,9 @@ unsigned long systickCnt = 0;
 int setPWMduty1, setPWMduty2;
 int setRPS1, setRPS2;
 int iread = 0;
+//uint8_t *btDelta=0, *btState=0;
+unsigned char Delta;
+unsigned char Rawstate;
 
 void SysTickHandler(void);
 
@@ -40,9 +43,11 @@ int main(void){
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
     ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, LED_RED|LED_BLUE|LED_GREEN);
 
-	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
+//	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_RED);
+	GPIOPinWrite(GPIO_PORTF_BASE, LED_RED, 2);
 	ROM_SysCtlDelay(5000000);
-	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, 0);
+	GPIOPinWrite(GPIO_PORTF_BASE, LED_RED, 0);
+//	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, 0);
 	ROM_SysCtlDelay(5000000);
 	ROM_GPIOPinWrite(GPIO_PORTF_BASE, LED_RED|LED_GREEN|LED_BLUE, LED_GREEN);
 	ROM_SysCtlDelay(5000000);
@@ -90,6 +95,20 @@ int main(void){
 			}
 			UART0SendString(TXbuffer);
 		}
+		unsigned char btValue = ButtonsPoll(&Delta, &Rawstate);
+		if(BUTTON_PRESSED(LEFT_BUTTON,btValue,Delta))
+		{
+			GPIOPinWrite(GPIO_PORTF_BASE, LED_RED, GPIOPinRead(GPIO_PORTF_BASE, LED_RED)^2);
+			setPWMduty1 += 500;
+			setPWMduty2 += 500;
+		}
+		else if (BUTTON_PRESSED(RIGHT_BUTTON,btValue,Delta))
+		{
+			GPIOPinWrite(GPIO_PORTF_BASE, LED_BLUE, GPIOPinRead(GPIO_PORTF_BASE, LED_BLUE)^4);
+			setPWMduty1 -= 500;
+			setPWMduty2 -= 500;
+		}
+
 		Moving(MOTOR3, iDirection, setPWMduty1);
 		Moving(MOTOR4, iDirection, setPWMduty2);
 	}

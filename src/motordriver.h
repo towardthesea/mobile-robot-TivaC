@@ -328,10 +328,20 @@ int PIDController(float Set_Point, int rps, int Output, float Error){
 		
 	Output += (float)(Kp*Error_Now) + (float)(Ki*Error_Sum) + (float)(Kd*Error_Del);
 		
-	if(Output > 4095) Output = 4095;
-	if(Output < 0) Output = 0;
+//	if(Output > 4095) Output = 4095;
+//	if(Output < 0) Output = 0;
+	Output = limitPWM(Output);
 	
 	return Output;
+}
+
+int limitPWM(int input)
+{
+	int output=0;
+	if(input > 4095) output = 4095;
+	if(input < 0) output = 0;
+
+	return output;
 }
 
 #endif
